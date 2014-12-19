@@ -487,14 +487,14 @@ void MCRotationsMove(int type) // update all time slices for rotational degrees 
    MCAccep[type][MCROTAT] += MCRotChunkAcp;
 */
 
-   #pragma omp parallel for reduction(+: MCRotChunkTot,MCRotChunkAcp) private(rand1,rand2,rand3)
+#pragma omp parallel for reduction(+: MCRotChunkTot,MCRotChunkAcp) private(rand1,rand2,rand3)
    for (int itrot=0;itrot<NumbRotTimes;itrot=itrot+2)
-   {
-      rand1=runif(Rng);
-      rand2=runif(Rng);
-      rand3=runif(Rng);
-      MCRotLinStep(itrot,offset,gatom,type,step,rand1,rand2,rand3,MCRotChunkTot,MCRotChunkAcp);
-   }
+     {
+       rand1=runif(Rng);
+       rand2=runif(Rng);
+       rand3=runif(Rng);
+       MCRotLinStep(itrot,offset,gatom,type,step,rand1,rand2,rand3,MCRotChunkTot,MCRotChunkAcp);
+     }
 
    MCTotal[type][MCROTAT] += MCRotChunkTot;
    MCAccep[type][MCROTAT] += MCRotChunkAcp;
@@ -834,10 +834,20 @@ void MCRotLinStep(int it1,int offset,int gatom,int type,double step,double rand1
 
    double dens_old;
    double rho1,rho2,erot;
-
+// If t1 = 0 (the first bead), dens_new = SRotDens(p1,type)
+// if t1 = (NumbRotTimes-1) is the last bead, dens_new = SRotDens(p0,type)
    if(RotDenType == 0)
    {
-      dens_old = SRotDens(p0,type)*SRotDens(p1,type);
+// PN modification for open path below
+#ifdef PIGSROTORS
+      if (t1==0 || t1 == (NumbRotTimes-1)) 
+	if (t1==0)
+		dens_old = SRotDens(p1,type);
+	else
+                dens_old = SRotDens(p0,type);
+      else
+#endif
+      	dens_old = SRotDens(p0,type)*SRotDens(p1,type);
    }
    else if(RotDenType == 1)
    {
@@ -873,7 +883,16 @@ void MCRotLinStep(int it1,int offset,int gatom,int type,double step,double rand1
 
    if(RotDenType == 0)
    {
-      dens_new = SRotDens(p0,type)*SRotDens(p1,type);
+// PN modification for open path below
+#ifdef PIGSROTORS
+      if (t1==0 || t1 == (NumbRotTimes-1))
+        if (t1==0)
+                dens_new = SRotDens(p1,type);
+        else
+                dens_new = SRotDens(p0,type);
+      else
+#endif
+      	dens_new = SRotDens(p0,type)*SRotDens(p1,type);
    }
    else if(RotDenType == 1)
    {
@@ -1057,9 +1076,25 @@ void MCRot3Dstep(int it1, int offset, int gatom, int type, double step,double ra
       {
          rsrot_(Eulan1,Eulan2,&X_Rot,&Y_Rot,&Z_Rot,&MCRotTau,&RotOdEvn,&RotEoff,&rho,&erot);
       }
-
-      dens_old=dens_old*rho;
-      rhoold = rhoold + rho;
+// PN pigs
+// ask Toby if rhoold is for PQC only?
+#ifdef PIGSROTORS
+     if (t1==0 || t1 == (NumbRotTimes-1))
+        if (t1==0){
+                dens_old =rho;
+	        rhoold =  rho;
+	}
+        else {
+                dens_old =dens_old; 
+	        rhoold =  rhoold;
+	}
+      else {
+#endif
+      	dens_old=dens_old*rho;
+      	rhoold = rhoold + rho;
+#ifdef PIGSROTORS
+      }
+#endif
 
       if (fabs(dens_old)<RZERO) dens_old = 0.0;
 //    if (dens_old<0.0) nrerror("Rotational Moves: ","Negative rot density");

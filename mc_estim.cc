@@ -239,11 +239,11 @@ void densities_init(void)
    NUMB_DENS1D = NUMB_ATOMTYPES;  //# atom-atom densities [no cross-distributions]
 
    if (IMPURITY && (MCAtom[IMTYPE].molecule == 1))                          
-   NUMB_DENS2D = NUMB_ATOMTYPES;  //# molecule-atoms distributions 
+     NUMB_DENS2D = NUMB_ATOMTYPES;  //# molecule-atoms distributions 
 
-// Toby adds 3d distribution
+   // Toby adds 3d distribution
    if (IMPURITY && (MCAtom[IMTYPE].molecule == 2))                          
-   NUMB_DENS3D = NUMB_ATOMTYPES+NUMB_MOLCTYPES;  //# non-linear molecule-atoms distributions 
+     NUMB_DENS3D = NUMB_ATOMTYPES+NUMB_MOLCTYPES;  //# non-linear molecule-atoms distributions 
 
   _max_radius   = MAX_RADIUS/Units.length;  // max radius for radial distributions;
   _min_radius   = MIN_RADIUS/Units.length;  // min radius for radial distributions;
@@ -260,18 +260,29 @@ void densities_malloc(void)
   _gr1D  = doubleMatrix(NUMB_DENS1D,MC_BINSR);
   _gr1D_sum  = doubleMatrix(NUMB_DENS1D,MC_BINSR);
 
-   if (IMPURITY && (MCAtom[IMTYPE].molecule == 1))
-   {
+  if (IMPURITY && (MCAtom[IMTYPE].molecule == 1))
+    {
       _gr2D  = new double ** [NUMB_DENS2D];
       _gr2D_sum  = new double ** [NUMB_DENS2D];  //added by Hui Li
 
       for (int id=0;id<NUMB_DENS2D;id++) 
-      {
-      _gr2D[id] = doubleMatrix(MC_BINSR,MC_BINST);
-      _gr2D_sum[id] = doubleMatrix(MC_BINSR,MC_BINST); //added by Hui Li
-      }
-   }
+	{
+	  _gr2D[id] = doubleMatrix(MC_BINSR,MC_BINST);
+	  _gr2D_sum[id] = doubleMatrix(MC_BINSR,MC_BINST); //added by Hui Li
+	}
+    }
 
+  if (IMPURITY && (MCAtom[IMTYPE].molecule == 3))
+    {
+      _gr2D  = new double ** [NUMB_DENS2D];
+      _gr2D_sum  = new double ** [NUMB_DENS2D];  //added by Hui Li
+
+      for (int id=0;id<NUMB_DENS2D;id++) 
+	{
+	  _gr2D[id] = doubleMatrix(MC_BINSR,MC_BINST);
+	  _gr2D_sum[id] = doubleMatrix(MC_BINSR,MC_BINST); //added by Hui Li
+	}
+    }
 // the following if block added by Toby
   if (IMPURITY && (MCAtom[IMTYPE].molecule == 2))
   {
@@ -301,7 +312,16 @@ void densities_mfree(void)
       delete [] _gr2D;
       delete [] _gr2D_sum;   //added by Hui Li
     }
-
+   if (IMPURITY && MCAtom[IMTYPE].molecule == 3)
+     {
+       for (int id=0;id<NUMB_DENS2D;id++) 
+	 {
+	   free_doubleMatrix(_gr2D[id]);
+	   free_doubleMatrix(_gr2D_sum[id]);    //added by Hui Li
+	 }
+       delete [] _gr2D;
+       delete [] _gr2D_sum;   //added by Hui Li
+     }
    if (IMPURITY && MCAtom[IMTYPE].molecule == 2)
    {
       free_doubleMatrix(_gr3D);
@@ -316,63 +336,76 @@ void densities_reset(int mode)     //revised by Hui Li
    const char *_proc_= __func__; //  rcf_reset() 
 
    if ((mode != MC_BLOCK) && (mode != MC_TOTAL))
-   nrerror(_proc_,"Unknow mode");
+     nrerror(_proc_,"Unknow mode");
 #endif
 
-    for (int id=0;id<NUMB_DENS1D;id++) 
-    for (int ir=0;ir<MC_BINSR;ir++) 
-    {
-       if(mode == MC_BLOCK)
-       _gr1D[id][ir] = 0.0;
-
-       if(mode == MC_TOTAL)
-       _gr1D_sum[id][ir] = 0.0;
-    }
-
-    if (IMPURITY && (MCAtom[IMTYPE].molecule == 1))
-    for (int id=0;id<NUMB_DENS2D;id++) 
-    for (int ir=0;ir<MC_BINSR;ir++) 
-    for (int it=0;it<MC_BINST;it++) 
-    {
-       if(mode == MC_BLOCK)
-       _gr2D[id][ir][it] = 0.0;     // block average
-
-       if(mode == MC_TOTAL)        
-       _gr2D_sum[id][ir][it] = 0.0;     // accumulated average
-    }
-    if (IMPURITY && (MCAtom[IMTYPE].molecule == 2))
-    {
-    for (int id=0;id<NUMB_DENS3D;id++)
-    for (int ir=0;ir<MC_BINSR;ir++)
-    for (int it=0;it<MC_BINST;it++)
-    for (int ic=0;ic<MC_BINSC;ic++)
-    {
-
-       int ijk = (ir*MC_BINST + it)*MC_BINSC + ic;
-
-       if(mode == MC_BLOCK)
-       _gr3D[id][ijk] = 0.0;     // block average
-
-       if(mode == MC_TOTAL)
-       _gr3D_sum[id][ijk] = 0.0;     // accumulated average
-
-    }
-
-    if(mode == MC_TOTAL)
-    {
-
-       for (int it=0;it<MC_BINST;it++)
-       _relthe_sum[it]=0.0;
-
-       for (int ic=0;ic<MC_BINSC;ic++)
+   for (int id=0;id<NUMB_DENS1D;id++) 
+     for (int ir=0;ir<MC_BINSR;ir++) 
        {
-          _relphi_sum[ic]=0.0;
-          _relchi_sum[ic]=0.0;
+	 if(mode == MC_BLOCK)
+	   _gr1D[id][ir] = 0.0;
+
+	 if(mode == MC_TOTAL)
+	   _gr1D_sum[id][ir] = 0.0;
        }
 
-    }
+   if (IMPURITY && (MCAtom[IMTYPE].molecule == 1))
+     for (int id=0;id<NUMB_DENS2D;id++) 
+       for (int ir=0;ir<MC_BINSR;ir++) 
+	 for (int it=0;it<MC_BINST;it++) 
+	   {
+	     if(mode == MC_BLOCK)
+	       _gr2D[id][ir][it] = 0.0;     // block average
 
-    }
+	     if(mode == MC_TOTAL)        
+	       _gr2D_sum[id][ir][it] = 0.0;     // accumulated average
+	   }
+
+   if (IMPURITY && (MCAtom[IMTYPE].molecule == 3))
+     for (int id=0;id<NUMB_DENS2D;id++) 
+       for (int ir=0;ir<MC_BINSR;ir++) 
+	 for (int it=0;it<MC_BINST;it++) 
+	   {
+	     if(mode == MC_BLOCK)
+	       _gr2D[id][ir][it] = 0.0;     // block average
+
+	     if(mode == MC_TOTAL)        
+	       _gr2D_sum[id][ir][it] = 0.0;     // accumulated average
+	   }
+    
+   if (IMPURITY && (MCAtom[IMTYPE].molecule == 2))
+     {
+       for (int id=0;id<NUMB_DENS3D;id++)
+	 for (int ir=0;ir<MC_BINSR;ir++)
+	   for (int it=0;it<MC_BINST;it++)
+	     for (int ic=0;ic<MC_BINSC;ic++)
+	       {
+
+		 int ijk = (ir*MC_BINST + it)*MC_BINSC + ic;
+
+		 if(mode == MC_BLOCK)
+		   _gr3D[id][ijk] = 0.0;     // block average
+
+		 if(mode == MC_TOTAL)
+		   _gr3D_sum[id][ijk] = 0.0;     // accumulated average
+
+	       }
+
+       if(mode == MC_TOTAL)
+	 {
+
+	   for (int it=0;it<MC_BINST;it++)
+	     _relthe_sum[it]=0.0;
+
+	   for (int ic=0;ic<MC_BINSC;ic++)
+	     {
+	       _relphi_sum[ic]=0.0;
+	       _relchi_sum[ic]=0.0;
+	     }
+
+	 }
+
+     }
 }
 
 //------- RCF -------------------
@@ -947,8 +980,8 @@ double GetRotEnergy(void)
    int gatom = offset/NumbTimes;    // the same offset for rot and trans degrees
 
    double srot = 0.0;
-   ErotSQ=0.0;
-   Erot_termSQ=0.0;
+   ErotSQ=0.0; // a global variable
+   Erot_termSQ=0.0; // a global variable
 
    for (int it0=0;it0<NumbRotTimes;it0++)
    {
@@ -964,7 +997,7 @@ double GetRotEnergy(void)
          double rdens = SRotDens(p0,type);
 
          if  (fabs(rdens)>RZERO)               // need to find asymptotic for small rot dens
-         srot += (SRotDensDeriv(p0,type)/rdens);
+	   srot += (SRotDensDeriv(p0,type)/rdens);
          Erot_termSQ += (SRotDensDeriv(p0,type)/rdens)*(SRotDensDeriv(p0,type)/rdens);
          ErotSQ += SRotDensEsqrt(p0,type)/rdens;
       }
@@ -985,114 +1018,148 @@ double GetRotEnergy(void)
    
    return (srot);	      
 }
+double GetRotPlanarEnergy(void)
+{
+  if(RotDenType != 0) {cerr<<"only SOS rho"<<endl; exit(0);}
+  
+  int type = IMTYPE; 
+  int offset = MCAtom[type].offset;
 
+  double ERotPlanar=0.0;
+  // changed by PN below
+  ErotSQ=0.0;  // a global variable
+  Erot_termSQ=0.0;  // a global variable
+
+  for(int atom  = 0;atom<MCAtom[type].numb;atom++)                   // multi molecular impurtiy
+    {
+      offset   += (NumbTimes*atom);
+      int gatom = offset/NumbTimes;    // the same offset for rot and trans degrees
+
+      double srot = 0.0;
+      double sesq = 0.0;
+      double se_termsq=0.0;
+       
+#pragma omp parallel for reduction(+: srot,sesq,se_termsq)       
+      for (int it0=0;it0<NumbRotTimes;it0++)
+	{
+	  int t0 = offset +  it0;
+	  int t1 = offset + (it0 + 1) % NumbRotTimes;
+	   
+	  double p0 = 0.0;
+	  for (int id=0;id<NDIM;id++)
+	    p0 += (MCCosine[id][t0]*MCCosine[id][t1]);
+
+	  double rdens = SRotDens(p0,type);
+
+	  if  (fabs(rdens)>RZERO)               // need to find asymptotic for small rot dens
+	    srot += (SRotDensDeriv(p0,type)/rdens);
+	  se_termsq += (SRotDensDeriv(p0,type)/rdens)*(SRotDensDeriv(p0,type)/rdens);
+	  sesq += SRotDensEsqrt(p0,type)/rdens;
+	}
+      //      srot = srot / ((double)(NumbRotTimes));
+      // sesq = sesq / ((double)(NumbRotTimes)*(double)(NumbRotTimes));
+      // se_termsq = se_termsq/ ((double)(NumbRotTimes)*(double)(NumbRotTimes));
+      // TOBY question: should I divide by NumbRotTimes above?
+      
+      ERotPlanar += srot;
+      ErotSQ += sesq;
+      Erot_termSQ += se_termsq; 
+    }
+  return (ERotPlanar);	      
+}
 double GetRotE3D(void)
 {
-   int type = IMTYPE;
+  int type = IMTYPE;
 
-   int offset = MCAtom[type].offset;
+  int offset = MCAtom[type].offset;
 
-   double ERot3D=0.0;
+  double ERot3D=0.0;
 
-   ErotSQ=0.0;
-   Erot_termSQ=0.0;
+  ErotSQ=0.0;
+  Erot_termSQ=0.0;
 
-   for(int atom  = 0;atom<MCAtom[type].numb;atom++)                   // multi molecular impurtiy
-   {
-   offset   += (NumbTimes*atom);
-   int gatom = offset/NumbTimes;    // the same offset for rot and trans degrees
+  for(int atom  = 0;atom<MCAtom[type].numb;atom++)                   // multi molecular impurtiy
+    {
+      offset   += (NumbTimes*atom);
+      int gatom = offset/NumbTimes;    // the same offset for rot and trans degrees
+       
+      double srot = 0.0;
+      double sesq = 0.0;
+      double se_termsq=0.0;
 
-   double srot = 0.0;
-   double sesq = 0.0;
-   double se_termsq=0.0;
-
-   int RNskip;
-   if(RotDenType == 0)
-   {
-      RNskip = 1;
-   }
-   else if(RotDenType == 1)
-   {
-      RNskip = RNratio;
-   }
+      int RNskip;
+      if(RotDenType == 0)
+	{
+	  RNskip = 1;
+	}
+      else if(RotDenType == 1)
+	{
+	  RNskip = RNratio;
+	}
    
-   #pragma omp parallel for reduction(+: srot,sesq)
-   for (int it0=0;it0<NumbRotTimes;it0=it0+RNskip)
-   {
-      int t0 = offset +  it0;
-      int t1 = offset + (it0 + RNskip) % NumbRotTimes;
-//    Given the two sets of Euler angles at t0 and t1, Toby calculates srot and sesq
+#pragma omp parallel for reduction(+: srot,sesq) // TOBY question: why not include se_termsq in deduction?
+      for (int it0=0;it0<NumbRotTimes;it0=it0+RNskip)
+	{
+	  int t0 = offset +  it0;
+	  int t1 = offset + (it0 + RNskip) % NumbRotTimes;
+	  //    Given the two sets of Euler angles at t0 and t1, Toby calculates srot and sesq
+	  double rho;
+	  double erot;
+	  double esq;
+	  int istop=0;
+	  double Eulan1[3];
+	  double Eulan2[3];
+	  double Eulrel[3];
+	  double therel,phirel,chirel;
 
-      double rho;
-      double erot;
-      double esq;
-      int istop=0;
-      double Eulan1[3];
-      double Eulan2[3];
-      double Eulrel[3];
-      double therel,phirel,chirel;
-
-      Eulan1[0]=MCAngles[PHI][t0];
-      Eulan1[1]=acos(MCAngles[CTH][t0]);
-      Eulan1[2]=MCAngles[CHI][t0];
-      Eulan2[0]=MCAngles[PHI][t1];
-      Eulan2[1]=acos(MCAngles[CTH][t1]);
-      Eulan2[2]=MCAngles[CHI][t1];
-
-      rotden_(Eulan1,Eulan2,Eulrel,&rho,&erot,&esq,rhoprp,erotpr,erotsq,&istop);
-      phirel=Eulrel[0];
-      therel=Eulrel[1];
-      chirel=Eulrel[2];
-
-      int bin_t    = (int)floor(therel/_delta_theta);
-      if ((bin_t<MC_BINST) && (bin_t>=0))
-      _relthe_sum[bin_t] +=(double)RNskip;
-
-      int bin_p = (int)floor(phirel/_delta_chi);
-      if ((bin_p<MC_BINSC) && (bin_p>=0))
-      _relphi_sum[bin_p] +=(double)RNskip;
-
-      int bin_c = (int)floor(chirel/_delta_chi);
-      if ((bin_c<MC_BINSC) && (bin_c>=0))
-      _relchi_sum[bin_c] +=(double)RNskip;
-
-//    Rattle Shake rotational energy
-      if(RotDenType == 1 && RNratio == 1)
-      rsrot_(Eulan1,Eulan2,&X_Rot,&Y_Rot,&Z_Rot,&MCRotTau,&RotOdEvn,&RotEoff,&rho,&erot);
-
-//    srot += erot;
-      if(RotDenType == 1 && RNratio == 1)
-      {
-         srot += rho;
-      }
-      else
-      srot += erot;
-
-      sesq += esq;
-      se_termsq += erot*erot;
-
-   }
-
-   srot = srot / ((double)(NumbRotTimes/RNskip));
-   sesq = sesq / ((double)(NumbRotTimes/RNskip)*(double)(NumbRotTimes/RNskip));
-   se_termsq = se_termsq/ ((double)(NumbRotTimes/RNskip)*(double)(NumbRotTimes/RNskip));
-   ERot3D += srot;
-   ErotSQ += sesq;
-   Erot_termSQ += se_termsq;
-
-// Rattle Shake rotational energy
-   if(RotDenType == 1 && RNratio == 1)
-   {
-      ERot3D = ERot3D/(4.0*(MCRotTau/WNO2K)*(MCRotTau/WNO2K)); 
-      ERot3D += 0.25*(X_Rot+Y_Rot+Z_Rot) + 1.5/(MCRotTau/WNO2K);
-
-      ERot3D = ERot3D/WNO2K;
-   }
-
-   }
-
-
-   return (ERot3D);
+	  Eulan1[0]=MCAngles[PHI][t0];
+	  Eulan1[1]=acos(MCAngles[CTH][t0]);
+	  Eulan1[2]=MCAngles[CHI][t0];
+	  Eulan2[0]=MCAngles[PHI][t1];
+	  Eulan2[1]=acos(MCAngles[CTH][t1]);
+	  Eulan2[2]=MCAngles[CHI][t1];
+	   
+	  rotden_(Eulan1,Eulan2,Eulrel,&rho,&erot,&esq,rhoprp,erotpr,erotsq,&istop);
+	  phirel=Eulrel[0];
+	  therel=Eulrel[1];
+	  chirel=Eulrel[2];	   
+	  int bin_t    = (int)floor(therel/_delta_theta);
+	  if ((bin_t<MC_BINST) && (bin_t>=0))
+	    _relthe_sum[bin_t] +=(double)RNskip;	   
+	  int bin_p = (int)floor(phirel/_delta_chi);
+	  if ((bin_p<MC_BINSC) && (bin_p>=0))
+	    _relphi_sum[bin_p] +=(double)RNskip;	   
+	  int bin_c = (int)floor(chirel/_delta_chi);
+	  if ((bin_c<MC_BINSC) && (bin_c>=0))
+	    _relchi_sum[bin_c] +=(double)RNskip;	   
+	  //    Rattle Shake rotational energy
+	  if(RotDenType == 1 && RNratio == 1)
+	    rsrot_(Eulan1,Eulan2,&X_Rot,&Y_Rot,&Z_Rot,&MCRotTau,&RotOdEvn,&RotEoff,&rho,&erot);
+	  //    srot += erot;
+	  if(RotDenType == 1 && RNratio == 1)
+	    {
+	      srot += rho;
+	    }
+	  else
+	    srot += erot;	   
+	  sesq += esq;
+	  se_termsq += erot*erot;	   
+	}       
+      srot = srot / ((double)(NumbRotTimes/RNskip));
+      sesq = sesq / ((double)(NumbRotTimes/RNskip)*(double)(NumbRotTimes/RNskip));
+      se_termsq = se_termsq/ ((double)(NumbRotTimes/RNskip)*(double)(NumbRotTimes/RNskip));
+      
+      ERot3D += srot;
+      ErotSQ += sesq;
+      Erot_termSQ += se_termsq;       
+      if(RotDenType == 1 && RNratio == 1)      // Rattle Shake rotational energy
+	{
+	  ERot3D = ERot3D/(4.0*(MCRotTau/WNO2K)*(MCRotTau/WNO2K)); 
+	  ERot3D += 0.25*(X_Rot+Y_Rot+Z_Rot) + 1.5/(MCRotTau/WNO2K);	   
+	  ERot3D = ERot3D/WNO2K;
+	}  
+    }  
+  return (ERot3D);
 }
 
 /* reactive */

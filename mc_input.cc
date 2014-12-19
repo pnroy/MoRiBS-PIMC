@@ -26,9 +26,10 @@ const char IO_DIMENSION[]      = "DIMENSION";
 const char IO_RESTART[]        = "RESTART";
 const char IO_TEMPERATURE[]    = "TEMPERATURE";
 const char IO_ATOM[]           = "ATOM";
-const char IO_MOLECULE[]       = "MOLECULE";
+const char IO_MOLECULE[]       = "MOLECULE"; // linear molecule
 // Toby's value
 const char IO_NONLINEAR[]      = "NONLINEAR";
+const char IO_PLANAR[]      = "PLANAR";
 const char IO_DENSITY[]        = "DENSITY";
 const char IO_READMCCOORDS[]   = "READMCCOORDS";
 
@@ -139,7 +140,7 @@ void IOReadParams(const char in_file[],int & mc_status)
         inf>>Density;
      }
      else 
-     if ((params==IO_ATOM)||(params==IO_MOLECULE)||(params==IO_NONLINEAR))
+       if ((params==IO_ATOM)||(params==IO_MOLECULE)||(params==IO_NONLINEAR)||(params==IO_PLANAR))
      {
         inf>>MCAtom[type].type;          // [1] 
         inf>>MCAtom[type].numb;          // [2]
@@ -181,17 +182,20 @@ void IOReadParams(const char in_file[],int & mc_status)
 
         MCAtom[type].molecule = 0;  // atom
 
+	
         if (params == IO_MOLECULE)
-        MCAtom[type].molecule = 1;  // molecular impurity
+	  MCAtom[type].molecule = 1;  // molecular impurity
         else if (params == IO_NONLINEAR)
-        MCAtom[type].molecule = 2;
+	  MCAtom[type].molecule = 2;
+	else if (params == IO_PLANAR)
+	  MCAtom[type].molecule = 3;
         else                        // atom
-        if (IMPURITY) nrerror(_proc_,"Molecules should follow atoms in input file");
-//      the latter is important, for example, for the density estimators
+	  if (IMPURITY) nrerror(_proc_,"Molecules should follow atoms in input file");
+	//      the latter is important, for example, for the density estimators
 
         if (MCAtom[type].numb > 0)   // ignore this atom/molecule type if N <= 0 
         {
-           if ((MCAtom[type].molecule == 1)||(MCAtom[type].molecule == 2))
+           if ((MCAtom[type].molecule == 1)||(MCAtom[type].molecule == 2)||(MCAtom[type].molecule == 3))
            {  
               IMPURITY         = true;
               NUMB_MOLCS      += MCAtom[type].numb;
@@ -661,108 +665,108 @@ void QWormsIO(int tstatus, const char file_name[])
 
 void IOxyz(int tstatus, const char file_name[]) 
 {
-   const char *_proc_=__func__;    // "IOxyz"; 
+  const char *_proc_=__func__;    // "IOxyz"; 
 
-//---------------- Open  ------------
+  //---------------- Open  ------------
 
-   ios::openmode mode;
+  ios::openmode mode;
 
-   switch (tstatus)
-   {
-      case IOWrite: mode = ios::out;  break;
-      case IORead : mode = ios::in;   break;
-      default     :
+  switch (tstatus)
+    {
+    case IOWrite: mode = ios::out;  break;
+    case IORead : mode = ios::in;   break;
+    default     :
       nrerror (_proc_,IO_ERR_WMODE);  break;      
-   } 
+    } 
 
-   fstream fid(file_name,mode);
+  fstream fid(file_name,mode);
 
-   if (!fid.good())
-   _io_error(_proc_,IO_ERR_FOPEN,file_name);
+  if (!fid.good())
+    _io_error(_proc_,IO_ERR_FOPEN,file_name);
 
-   io_setout(fid);
+  io_setout(fid);
 
-//---------------- Read/Write ------------
+  //---------------- Read/Write ------------
 
-   stringstream stype; 
-   string       sbuff;    
+  stringstream stype; 
+  string       sbuff;    
   
-   int offset;
+  int offset;
 
-   int type = 0;
-   int atom = 0;  // first atom # will be 1, NOT 0 
-   switch (tstatus)
-   {
-      case IOWrite:
-         fid<<MaxnTimes<<endl;                    // total number of "atoms" 
-         fid<<COMMENTS<<BLANK<<IO_COM_XYZ<<endl;  // comments
+  int type = 0;
+  int atom = 0;  // first atom # will be 1, NOT 0 
+  switch (tstatus)
+    {
+    case IOWrite:
+      fid<<MaxnTimes<<endl;                    // total number of "atoms" 
+      fid<<COMMENTS<<BLANK<<IO_COM_XYZ<<endl;  // comments
 
-         for (int it=0;it<MaxnTimes;it++)
-         {
-            if (it==MCAtom[type+1].offset) {type++; atom=0;}    // new atom type
-            if ((it-MCAtom[type].offset)%NumbTimes==0) atom++;  // new atom
+      for (int it=0;it<MaxnTimes;it++)
+	{
+	  if (it==MCAtom[type+1].offset) {type++; atom=0;}    // new atom type
+	  if ((it-MCAtom[type].offset)%NumbTimes==0) atom++;  // new atom
 
-            stype.str(""); stype<<MCAtom[type].type<<atom;      // atom label
-            fid<<setw(5)<<stype.str()<<BLANK; 
+	  stype.str(""); stype<<MCAtom[type].type<<atom;      // atom label
+	  fid<<setw(5)<<stype.str()<<BLANK; 
                                                  
-            for (int id=0;id<NDIM;id++)
+	  for (int id=0;id<NDIM;id++)
             {
-            fid<<setw(IO_WIDTH)<<MCCoords[id][it]<<BLANK;
-            fid<<setw(IO_WIDTH)<<MCCosine[id][it]<<BLANK;
-//          Toby replaces the above line by
-//          fid<<setw(IO_WIDTH)<<MCAngles[id][it]<<BLANK;
-//          by doing that, Toby stores the three Euler angles, not the unit vector of the two angles orientation
+	      fid<<setw(IO_WIDTH)<<MCCoords[id][it]<<BLANK;
+	      fid<<setw(IO_WIDTH)<<MCCosine[id][it]<<BLANK;
+	      //          Toby replaces the above line by
+	      //          fid<<setw(IO_WIDTH)<<MCAngles[id][it]<<BLANK;
+	      //          by doing that, Toby stores the three Euler angles, not the unit vector of the two angles orientation
             }
-            fid<<endl;
-         } 
+	  fid<<endl;
+	} 
 
-/*  the same as above, but explicit sum over atoms and types
+      /*  the same as above, but explicit sum over atoms and types
 
-         for (int type=0;type<NumbTypes;type++)
-         for (int atom=0;atom<MCAtom[type].numb;atom++)
-         for (int it=0;it<NumbTimes;it++)
-         {
-            stype.str(""); stype<<MCAtom[type].type<<atom;     // atom label
-            fid<<setw(5)<<stype.str()<<BLANK; 
+	  for (int type=0;type<NumbTypes;type++)
+	  for (int atom=0;atom<MCAtom[type].numb;atom++)
+	  for (int it=0;it<NumbTimes;it++)
+	  {
+	  stype.str(""); stype<<MCAtom[type].type<<atom;     // atom label
+	  fid<<setw(5)<<stype.str()<<BLANK; 
            
-            offset=MCAtom[type].offset+NumbTimes*atom;
+	  offset=MCAtom[type].offset+NumbTimes*atom;
  
-            for (int id=0;id<NDIM;id++) 
-            fid<<MCCoords[id][offset+it]<<BLANK;
-            fid<<endl;
-         } 
-*/ 
-         break;
+	  for (int id=0;id<NDIM;id++) 
+	  fid<<MCCoords[id][offset+it]<<BLANK;
+	  fid<<endl;
+	  } 
+      */ 
+      break;
 
-      case IORead:
-         fid>>MaxnTimes;         
-         getline(fid,sbuff);    // skip a comment line
+    case IORead:
+      fid>>MaxnTimes;         
+      getline(fid,sbuff);    // skip a comment line
 
-         for (int type=0;type<NumbTypes;type++)
-         for (int atom=0;atom<MCAtom[type].numb;atom++)
-         for (int it=0;it<NumbTimes;it++)
-         {
-            fid>>sbuff;         // skip an atom type
+      for (int type=0;type<NumbTypes;type++)
+	for (int atom=0;atom<MCAtom[type].numb;atom++)
+	  for (int it=0;it<NumbTimes;it++)
+	    {
+	      fid>>sbuff;         // skip an atom type
 
-            offset=MCAtom[type].offset+NumbTimes*atom;
-            for (int id=0;id<NDIM;id++) 
-            {
-             fid>>MCCoords[id][offset+it];
-             fid>>MCCosine[id][offset+it];
-//           Toby replaces the above line by
-//           fid>>MCAngles[id][offset+it];
-//           by doing that, Toby reads the three Euler angles, not the unit vector of the two angle orientation
-            }
-         } 
+	      offset=MCAtom[type].offset+NumbTimes*atom;
+	      for (int id=0;id<NDIM;id++) 
+		{
+		  fid>>MCCoords[id][offset+it];
+		  fid>>MCCosine[id][offset+it];
+		  //           Toby replaces the above line by
+		  //           fid>>MCAngles[id][offset+it];
+		  //           by doing that, Toby reads the three Euler angles, not the unit vector of the two angle orientation
+		}
+	    } 
 
-         break;
+      break;
 
-      default :
-         nrerror (_proc_,IO_ERR_WMODE);
-         break;      
-   } 
+    default :
+      nrerror (_proc_,IO_ERR_WMODE);
+      break;      
+    } 
 
-   fid.close();
+  fid.close();
 }
 
 void IOFileBackUp(const char file_name[])

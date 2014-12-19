@@ -1,13 +1,14 @@
 #.SUFFIXES: .o .cxx
 
-options= -Ofast -march=native -fopenmp
+#options= -Ofast -march=native -fopenmp
+options= -Ofast -fopenmp
 
-CFLAGS =-I./sprng/include -I/usr/local/include -DMOVECENTROIDTEST 
+CFLAGS =-I./sprng/include -I/usr/local/include -DMOVECENTROIDTEST -DPIGSROTORS
 
 #Below is the LDFLAGS Toby Zeng use on nlogn
-LDFLAGS=-L/home/pnroy/Dev/lib64/ -lm -L./sprng/lib -llcg -L/home/pnroy/Dev/lib64/ -lgfortran  -L/opt/intel/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
+#LDFLAGS=-L/home/pnroy/Dev/lib64/ -lm -L./sprng/lib -llcg -L/home/pnroy/Dev/lib64/ -lgfortran  -L/opt/intel/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
 #below is the LDFLAGS with minimum flags
-#LDFLAGS= -lm -L./sprng/lib -llcg -lgfortran
+LDFLAGS= -lm -L./sprng/lib -llcg -lgfortran -framework Accelerate
  
 #-------------------------------------------------------------------------
 #  Compilers
@@ -15,7 +16,7 @@ LDFLAGS=-L/home/pnroy/Dev/lib64/ -lm -L./sprng/lib -llcg -L/home/pnroy/Dev/lib64
 
 #CC=mpic++
 #CC=g++
-CC=/home/pnroy/Dev/bin/g++
+CC=g++
 FC=gfortran
 #FC=/home/pnroy/Dev/bin/gfortran
 

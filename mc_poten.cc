@@ -92,59 +92,76 @@ void init_pot3D(int atype);
 
 void InitPotentials(void)
 {
-   const char *_proc_=__func__;    // "InitPotentials"; 
+  const char *_proc_=__func__;    // "InitPotentials"; 
 
-   for (int atype=0;atype<NumbTypes;atype++)
-   if ((MCAtom[atype].molecule == 1)||(MCAtom[atype].molecule == 2))                            // molecules
-   {
-      if ((MCAtom[atype].molecule == 1) && ((MCAtom[atype].numb  > 1) || (MCAtom[atype].numb  < 0)) )
-      nrerror(_proc_,"No more than one linear dopant molecule so far"); // check potential energy
-
-      if ((MCAtom[atype].molecule == 2) && ((MCAtom[atype].numb  > NumbRotLim) || (MCAtom[atype].numb  < 0)) )
-      nrerror(_proc_,"Weird # of non-linear rotors"); // check # of non-linear rotors
-
-      if(MCAtom[atype].molecule == 1)
-      init_pot2D(atype);
-//      init_dpot2D(atype);   //revised by Hui Li
-
-      if(MCAtom[atype].molecule == 2 && NumbTypes > 1)
+  for (int atype=0;atype<NumbTypes;atype++)
+    if ((MCAtom[atype].molecule == 1)||(MCAtom[atype].molecule == 2)||(MCAtom[atype].molecule == 3))                            // molecules
       {
-      init_pot3D(atype);
-//    potred_(vtable);
-      }
+	if ((MCAtom[atype].molecule == 1) && ((MCAtom[atype].numb  > 1) || (MCAtom[atype].numb  < 0)) )
+	  nrerror(_proc_,"No more than one linear dopant molecule so far"); // check potential energy
 
-   }
-   else                                                  // atoms
-   init_pot1D(atype);
+	if ((MCAtom[atype].molecule == 2) && ((MCAtom[atype].numb  > NumbRotLim) || (MCAtom[atype].numb  < 0)) )
+	  nrerror(_proc_,"Weird # of non-linear rotors"); // check # of non-linear rotors
+
+	if(MCAtom[atype].molecule == 1)
+	  init_pot2D(atype);
+	//      init_dpot2D(atype);   //revised by Hui Li
+	if(MCAtom[atype].molecule == 3)
+	  init_pot2D(atype);
+	//      init_dpot2D(atype);   //revised by Hui Li
+
+
+	if(MCAtom[atype].molecule == 2 && NumbTypes > 1)
+	  {
+	    init_pot3D(atype);
+	    //    potred_(vtable);
+	  }
+
+      }
+    else                                                  // atoms
+      init_pot1D(atype);
 }
 
 void DonePotentials(void)
 {
 
-   for (int atype=0;atype<NumbTypes;atype++)
-   if (MCAtom[atype].molecule == 1)              // molecules
-   {
-       delete [] _rgrid2D[atype];
-       delete [] _cgrid2D[atype];
+  for (int atype=0;atype<NumbTypes;atype++)
+    if (MCAtom[atype].molecule == 1)              // molecules
+      {
+	delete [] _rgrid2D[atype];
+	delete [] _cgrid2D[atype];
  
-//       delete [] _drgrid2D[atype];     //add by Hui Li  
-//       delete [] _dcgrid2D[atype];     //add by Hui Li
+	//       delete [] _drgrid2D[atype];     //add by Hui Li  
+	//       delete [] _dcgrid2D[atype];     //add by Hui Li
 
     
-       free_doubleMatrix(_poten2D[atype]);  // atoms 
+	free_doubleMatrix(_poten2D[atype]);  // atoms 
 
-//       free_doubleMatrix(_dpoten2D[atype]);  // atoms revised by Hui Li 
-   }
-   else if (MCAtom[atype].molecule == 2)
-   {
-      delete [] vtable;
-   }
-   else
-   { 
-       delete [] _pgrid1D[atype];
-       delete [] _poten1D[atype];
-       delete [] _pderiv2[atype];  
-   }
+	//       free_doubleMatrix(_dpoten2D[atype]);  // atoms revised by Hui Li 
+      }
+    else if (MCAtom[atype].molecule == 3)              // molecules
+      {
+	delete [] _rgrid2D[atype];
+	delete [] _cgrid2D[atype];
+ 
+	//       delete [] _drgrid2D[atype];     //add by Hui Li  
+	//       delete [] _dcgrid2D[atype];     //add by Hui Li
+
+    
+	free_doubleMatrix(_poten2D[atype]);  // atoms 
+
+	//       free_doubleMatrix(_dpoten2D[atype]);  // atoms revised by Hui Li 
+      }
+    else if (MCAtom[atype].molecule == 2)
+      {
+	delete [] vtable;
+      }
+    else
+      { 
+	delete [] _pgrid1D[atype];
+	delete [] _poten1D[atype];
+	delete [] _pderiv2[atype];  
+      }
 }
 
 void InitRotDensity(void)
@@ -153,7 +170,9 @@ void InitRotDensity(void)
 
 // this is only performed for a linear rotor.  The non-linear rotor is treated by hard coding by Toby
    if(MCAtom[IMTYPE].molecule == 1 && RotDenType == 0)
-   init_rotdens(IMTYPE);
+     init_rotdens(IMTYPE);
+   if(MCAtom[IMTYPE].molecule == 3 && RotDenType == 0)
+     init_rotdens(IMTYPE);
 
    if(MCAtom[IMTYPE].molecule == 2 && RotDenType == 0)
    {

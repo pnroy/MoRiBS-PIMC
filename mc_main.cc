@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
    InitPotentials();
 
    if (ROTATION)
-   InitRotDensity();
+     InitRotDensity();
 
    if((IREFLX == 1 || IREFLY == 1 || IREFLZ == 1) && MCAtom[IMTYPE].molecule != 2)
    {
@@ -451,7 +451,10 @@ int main(int argc, char *argv[])
            SaveGraSum(MCFileName.c_str(),totalCount);
 
            if(IMPURITY && MCAtom[IMTYPE].molecule == 1)
-           SaveDensities2D(MCFileName.c_str(),totalCount,MC_TOTAL);
+	     SaveDensities2D(MCFileName.c_str(),totalCount,MC_TOTAL);
+
+	   if(IMPURITY && MCAtom[IMTYPE].molecule == 3)
+	     SaveDensities2D(MCFileName.c_str(),totalCount,MC_TOTAL);
 
            if(IMPURITY && MCAtom[IMTYPE].molecule == 2)
            {
@@ -509,16 +512,21 @@ int main(int argc, char *argv[])
 
 void PIMCPass(int type,int time)
 {
+
+  // skip solvent and translation moves for rotations only
+#ifndef PIGSROTORS
    if (time == 0)
    MCMolecularMove(type);        
-
+// move the solvent particles
    MCBisectionMove(type,time);
+#endif
 
    if ((type == IMTYPE) && ROTATION && MCAtom[type].molecule == 1)  // rotational degrees of freedom
-   MCRotationsMove(type);
-
+     MCRotationsMove(type);
+   if ((type == IMTYPE) && ROTATION && MCAtom[type].molecule == 3)  // rotational degrees of freedom
+     MCRotationsMove(type);
    if ((type == IMTYPE) && ROTATION && MCAtom[type].molecule == 2)  // non-linear rotor rotation added by Toby
-   MCRotations3D(type);
+     MCRotations3D(type);
 }
 
 void MCResetBlockAverage(void) 
@@ -573,9 +581,12 @@ void MCGetAverage(void)
 //     double srot;
 
        if(MCAtom[IMTYPE].molecule == 1)
-       srot = GetRotEnergy();           // kin energy
+	 srot = GetRotEnergy();           // kin energy
        else
-       srot = GetRotE3D();
+	 if(MCAtom[IMTYPE].molecule == 3)
+	   srot = GetRotPlanarEnergy();           // kin energy
+	 else
+	   srot = GetRotE3D();
         
       _brot       += srot;
       _rot_total  += srot;
@@ -703,61 +714,65 @@ void MCWormAverage(void)
 
 void MCSaveBlockAverages(long int blocknumb) 
 {
-   const char *_proc_=__func__;    //   MCSaveBlockAverages()
+  const char *_proc_=__func__;    //   MCSaveBlockAverages()
 
-   stringstream bc;                // convert block # to string
-   bc.width(IO_BLOCKNUMB_WIDTH); 
-   bc.fill('0');
-   bc<<blocknumb;
+  stringstream bc;                // convert block # to string
+  bc.width(IO_BLOCKNUMB_WIDTH); 
+  bc.fill('0');
+  bc<<blocknumb;
 
-   string fname = MCFileName + bc.str();  // file name prefix including block #
+  string fname = MCFileName + bc.str();  // file name prefix including block #
 
-//-----------------------------------------------------------------
-// densities
+  //-----------------------------------------------------------------
+  // densities
 
-// toby temporarily by-pass the density save for the non-linear rotor
-   if( IMPURITY && MCAtom[IMTYPE].molecule == 1)
-   {
-   SaveDensities1D    (fname.c_str(),avergCount);
+  // toby temporarily by-pass the density save for the non-linear rotor
+  if( IMPURITY && MCAtom[IMTYPE].molecule == 1)
+    {
+      SaveDensities1D    (fname.c_str(),avergCount);       
+      SaveDensities2D    (fname.c_str(),avergCount,MC_BLOCK);
+    }
+    if( IMPURITY && MCAtom[IMTYPE].molecule == 3)
+    {
+      SaveDensities1D    (fname.c_str(),avergCount);       
+      SaveDensities2D    (fname.c_str(),avergCount,MC_BLOCK);
+    }
 
-   SaveDensities2D    (fname.c_str(),avergCount,MC_BLOCK);
-   }
+  if( IMPURITY && MCAtom[IMTYPE].molecule == 2)
+    {
+      SaveDensities1D    (fname.c_str(),avergCount);
 
-   if( IMPURITY && MCAtom[IMTYPE].molecule == 2)
-   {
-   SaveDensities1D    (fname.c_str(),avergCount);
+      SaveRho1D          (fname.c_str(),avergCount,MC_BLOCK);
 
-   SaveRho1D          (fname.c_str(),avergCount,MC_BLOCK);
+      // SaveDensities3D    (fname.c_str(),avergCount,MC_BLOCK); // this step takes lots of space. temporarily turnned off
 
-// SaveDensities3D    (fname.c_str(),avergCount,MC_BLOCK); // this step takes lots of space. temporarily turnned off
+      SaveRhoThetaChi    (fname.c_str(),avergCount,MC_BLOCK);
 
-   SaveRhoThetaChi    (fname.c_str(),avergCount,MC_BLOCK);
+      // IOxyzAng(IOWrite,fname.c_str());
+    }
 
-// IOxyzAng(IOWrite,fname.c_str());
-   }
+  if (ROTATION) 
+    SaveRCF            (fname.c_str(),avergCount,MC_BLOCK); 
 
-   if (ROTATION) 
-   SaveRCF            (fname.c_str(),avergCount,MC_BLOCK); 
+  SaveEnergy         (MCFileName.c_str(),avergCount,blocknumb);
 
-   SaveEnergy         (MCFileName.c_str(),avergCount,blocknumb);
+  if (BOSONS) 
+    SaveExchangeLength (MCFileName.c_str(),avergCount,blocknumb);
 
-   if (BOSONS) 
-   SaveExchangeLength (MCFileName.c_str(),avergCount,blocknumb);
+  if (BOSONS && MCAtom[IMTYPE].molecule ==1)  
+    SaveAreaEstimators (MCFileName.c_str(),avergCount,blocknumb);
 
-   if (BOSONS && MCAtom[IMTYPE].molecule ==1)  
-   SaveAreaEstimators (MCFileName.c_str(),avergCount,blocknumb);
-
-   if (BOSONS)
-   {
+  if (BOSONS)
+    {
       int iframe = 0;
       SaveAreaEstim3D (MCFileName.c_str(),avergCount,blocknumb,iframe);
-   }
+    }
 
-   if ((BOSONS && MCAtom[IMTYPE].molecule ==2) && ISPHER == 0)
-   {
+  if ((BOSONS && MCAtom[IMTYPE].molecule ==2) && ISPHER == 0)
+    {
       int iframe = 1;
       SaveAreaEstim3D (MCFileName.c_str(),avergCount,blocknumb,iframe);
-   }
+    }
 
 }
 
@@ -777,13 +792,13 @@ void SaveEnergy (const char fname [], double acount, long int blocknumb)
    if (!fid.is_open())
   _io_error(_proc_,IO_ERR_FOPEN,fenergy.c_str());
 
-   fid << setw(IO_WIDTH_BLOCK) << blocknumb  << BLANK;                 // block number
-   fid << setw(IO_WIDTH) << _bkin*Units.energy/avergCount << BLANK;    // kinetic energy
-   fid << setw(IO_WIDTH) << _bpot*Units.energy/avergCount << BLANK;    // potential anergy
-   fid << setw(IO_WIDTH) <<(_bkin+_bpot)*Units.energy/avergCount << BLANK;   
+   fid << setw(IO_WIDTH_BLOCK) << blocknumb  << BLANK;                 // block number 1 
+   fid << setw(IO_WIDTH) << _bkin*Units.energy/avergCount << BLANK;    // kinetic energy 2
+   fid << setw(IO_WIDTH) << _bpot*Units.energy/avergCount << BLANK;    // potential anergy 3
+   fid << setw(IO_WIDTH) <<(_bkin+_bpot)*Units.energy/avergCount << BLANK;  // 4
    
 // if (ROTATION)
-   fid << setw(IO_WIDTH) << _brot*Units.energy/avergCount << BLANK;    // rot energy
+   fid << setw(IO_WIDTH) << _brot*Units.energy/avergCount << BLANK;    // rot energy 5
    fid << setw(IO_WIDTH) << _brotsq*(Units.energy*Units.energy)/avergCount << BLANK;    // rot energy square
 // fid << setw(IO_WIDTH) << _dbpot*Units.energy/avergCount << BLANK;    // potential differencies added by Hui Li 
    fid << setw(IO_WIDTH) <<(_bkin+_bpot+_brot)*Units.energy/avergCount << BLANK;  //total energy including rot energy 

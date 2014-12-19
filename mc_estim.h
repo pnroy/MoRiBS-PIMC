@@ -47,6 +47,7 @@ void GetPermutation(void);
 // Rotations
 
 double GetRotEnergy(void);
+double GetRotPlanarEnergy(void);
 double GetRotE3D(void); // get rotational energy for nonlinear rotor, added by toby
 double GetRotE3Dstep(int, int); // real step in loop of GetRotE3D, added by toby
 double GetExactRotEnergy(int);

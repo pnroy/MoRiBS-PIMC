@@ -129,48 +129,48 @@ void replInitial_config(double **);
 
 void MCMemAlloc(void)  // allocate  memmory 
 {
-   MCCoords  = doubleMatrix (NDIM,NumbAtoms*NumbTimes);  
-   newcoords = doubleMatrix (NDIM,NumbAtoms*NumbTimes); 
+  MCCoords  = doubleMatrix (NDIM,NumbAtoms*NumbTimes);  
+  newcoords = doubleMatrix (NDIM,NumbAtoms*NumbTimes); 
 
-// TZMAT = doubleMatrix (NDIM,NDIM);
+  // TZMAT = doubleMatrix (NDIM,NDIM);
  
-   atom_list = new int [NumbAtoms];
+  atom_list = new int [NumbAtoms];
 
-// MCCosine  = doubleMatrix (NDIM,NumbAtoms*NumbTimes);  
-   MCCosine  = doubleMatrix (3,NumbAtoms*NumbTimes); 
-   MCAngles  = doubleMatrix (3,NumbAtoms*NumbTimes); 
+  // MCCosine  = doubleMatrix (NDIM,NumbAtoms*NumbTimes);  
+  MCCosine  = doubleMatrix (3,NumbAtoms*NumbTimes); 
+  MCAngles  = doubleMatrix (3,NumbAtoms*NumbTimes); 
 
-   MCCooInit = new double [NDIM*NumbAtoms*NumbTimes];
-   MCAngInit = new double [NDIM*NumbAtoms*NumbTimes];
+  MCCooInit = new double [NDIM*NumbAtoms*NumbTimes];
+  MCAngInit = new double [NDIM*NumbAtoms*NumbTimes];
 
-// non-linear rotor
-   rhoprp    = new double [SizeRotDen];
-   erotpr    = new double [SizeRotDen];
-   erotsq    = new double [SizeRotDen];
+  // non-linear rotor
+  rhoprp    = new double [SizeRotDen];
+  erotpr    = new double [SizeRotDen];
+  erotsq    = new double [SizeRotDen];
 
-// TABLES
+  // TABLES
   
-   MCType    = new int [NumbAtoms];
-   PIndex    = new int [NumbAtoms];
-   RIndex    = new int [NumbAtoms];
+  MCType    = new int [NumbAtoms];
+  PIndex    = new int [NumbAtoms];
+  RIndex    = new int [NumbAtoms];
 }
 
 void MCMemFree(void)  //  free memory
 {
-   free_doubleMatrix(MCCoords);  
-   free_doubleMatrix(newcoords); 
+  free_doubleMatrix(MCCoords);  
+  free_doubleMatrix(newcoords); 
 
-   delete [] atom_list;
+  delete [] atom_list;
 
-   delete [] rhoprp;
-   delete [] erotpr;
+  delete [] rhoprp;
+  delete [] erotpr;
  
-   free_doubleMatrix(MCCosine); 
-   free_doubleMatrix(MCAngles); 
+  free_doubleMatrix(MCCosine); 
+  free_doubleMatrix(MCAngles); 
 
-   delete MCType;
-   delete PIndex;
-   delete RIndex;
+  delete MCType;
+  delete PIndex;
+  delete RIndex;
 }
 
 //------------ MC SYSTEM OF UNITS --------------------------
@@ -184,394 +184,394 @@ int   MPIrank;    // MPI
 
 void MCSetUnits(void)
 {
-   Units.temperature = 1.0;   // Kelvin
-   Units.energy      = 1.0;   // Kelvin
-   Units.length      = 1.0;   // Angstrom
-   Units.mass        = 1.0;   // amu
+  Units.temperature = 1.0;   // Kelvin
+  Units.energy      = 1.0;   // Kelvin
+  Units.length      = 1.0;   // Angstrom
+  Units.mass        = 1.0;   // amu
 
-   Units.senergy     = "Kelvin";
-   Units.slength     = "Angstrom";
+  Units.senergy     = "Kelvin";
+  Units.slength     = "Angstrom";
 
-   Temperature      /= Units.temperature;
-   Density          *= (Units.length*Units.length*Units.length);
+  Temperature      /= Units.temperature;
+  Density          *= (Units.length*Units.length*Units.length);
 
-   double lambda     = 100.0*(HBAR*HBAR)/(AMU*K_B);   // \AA^2 K
+  double lambda     = 100.0*(HBAR*HBAR)/(AMU*K_B);   // \AA^2 K
 
-   for (int atype=0;atype<NumbTypes;atype++)
-   {
+  for (int atype=0;atype<NumbTypes;atype++)
+    {
       MCAtom[atype].mcstep /= Units.length;
       MCAtom[atype].mass   /= Units.mass;
       MCAtom[atype].brot   /= Units.energy;
 
       MCAtom[atype].lambda  = 0.5*lambda/MCAtom[atype].mass;  // (hbar^2/2m)
-   } 
+    } 
 }
 
 void MCSetUnits_HO_TEST(void)
 {
-   Units.temperature = 1.0;   // Kelvin
-   Units.energy      = 1.0;   // Kelvin
-   Units.length      = 1.0;   // Angstrom
-   Units.mass        = 1.0;   // amu
+  Units.temperature = 1.0;   // Kelvin
+  Units.energy      = 1.0;   // Kelvin
+  Units.length      = 1.0;   // Angstrom
+  Units.mass        = 1.0;   // amu
 
-   Units.senergy     = "arb units";
-   Units.slength     = "arb units";
+  Units.senergy     = "arb units";
+  Units.slength     = "arb units";
 
-   Temperature      /= Units.temperature;
-   Density          *= (Units.length*Units.length*Units.length);
+  Temperature      /= Units.temperature;
+  Density          *= (Units.length*Units.length*Units.length);
 
-   double lambda     = 1.0;   // \AA^2 K
+  double lambda     = 1.0;   // \AA^2 K
 
-   for (int atype=0;atype<NumbTypes;atype++)
-   {
+  for (int atype=0;atype<NumbTypes;atype++)
+    {
       MCAtom[atype].mcstep /= Units.length;
       MCAtom[atype].mass   /= Units.mass;
       MCAtom[atype].brot   /= Units.energy;
 
       MCAtom[atype].lambda  = 0.5*lambda/MCAtom[atype].mass;  // (hbar^2/2m)
-   } 
+    } 
 }
 
 void MCInitParams(void)
 {
-   const char *_proc_=__func__;    // "MCInitParams()";
+  const char *_proc_=__func__;    // "MCInitParams()";
 
-   double mass;
-   double brot;
+  double mass;
+  double brot;
 
-   for (int atype=0;atype<NumbTypes;atype++)
-   {
-       string stype=MCAtom[atype].type;
+  for (int atype=0;atype<NumbTypes;atype++)
+    {
+      string stype=MCAtom[atype].type;
 
-       if  (stype == HE4)
-       {
+      if  (stype == HE4)
+	{
           mass = MASS_HE4; 
           brot = 0.0; 
-       }
-       else
-       if (stype ==H2)
-       {
-          mass=MASS_H2;
-          brot = 0.0; 
-       }
-       else
-       if  (stype == OCS)
-       {
-          mass =(MASS_O16 + MASS_C12 + MASS_S32);
-          brot = B_OCS;
-       } 
-       else
-       if  (stype == N2O)
-       {
-          mass = (2.0*MASS_N14 + MASS_O16);
-          brot = B_N2O;
-       } 
-       else 
-       if  (stype == CO2)
-       {
-          mass =(MASS_C12 + 2.0*MASS_O16);
-          brot = B_CO2;
-       } 
-       else
-       if  (stype == CO)
-       {
-          mass =(MASS_C12 + MASS_O16);
-          brot = B_CO;
-       }
-       else
-       if  (stype == HCN)
-       {
-          mass =(MASS_H1 + MASS_C12 + MASS_N14);
-          brot = B_HCN;
-       } 
-       else 
-       if  (stype == HCCCN)
-       {
-          mass =(MASS_H1 + 3.0*MASS_C12 + MASS_N14);
-          brot = B_HCCCN;
-       } 
-       else
-       if  (stype == H2O)
-       {
-          mass =(2.0*MASS_H1 + MASS_O16);
-       }
-       else
-       if  (stype == SO2)
-          mass =(2.0*MASS_O16 + MASS_S32);
-       else
-       if  (stype == HCOOCH3)
-          mass =(4.0*MASS_H1 + 2.0*MASS_O16 + 2.0*MASS_C12);
-       else 
-       nrerror(_proc_,"Unknown atom/molecule type");
+	}
+      else
+	if (stype ==H2)
+	  {
+	    mass=MASS_H2;
+	    brot = 0.0; 
+	  }
+	else
+	  if  (stype == OCS)
+	    {
+	      mass =(MASS_O16 + MASS_C12 + MASS_S32);
+	      brot = B_OCS;
+	    } 
+	  else
+	    if  (stype == N2O)
+	      {
+		mass = (2.0*MASS_N14 + MASS_O16);
+		brot = B_N2O;
+	      } 
+	    else 
+	      if  (stype == CO2)
+		{
+		  mass =(MASS_C12 + 2.0*MASS_O16);
+		  brot = B_CO2;
+		} 
+	      else
+		if  (stype == CO)
+		  {
+		    mass =(MASS_C12 + MASS_O16);
+		    brot = B_CO;
+		  }
+		else
+		  if  (stype == HCN)
+		    {
+		      mass =(MASS_H1 + MASS_C12 + MASS_N14);
+		      brot = B_HCN;
+		    } 
+		  else 
+		    if  (stype == HCCCN)
+		      {
+			mass =(MASS_H1 + 3.0*MASS_C12 + MASS_N14);
+			brot = B_HCCCN;
+		      } 
+		    else
+		      if  (stype == H2O)
+			{
+			  mass =(2.0*MASS_H1 + MASS_O16);
+			}
+		      else
+			if  (stype == SO2)
+			  mass =(2.0*MASS_O16 + MASS_S32);
+			else
+			  if  (stype == HCOOCH3)
+			    mass =(4.0*MASS_H1 + 2.0*MASS_O16 + 2.0*MASS_C12);
+			  else 
+			    nrerror(_proc_,"Unknown atom/molecule type");
 
-       MCAtom[atype].mass = mass;
-       MCAtom[atype].brot = brot;
-   }
+      MCAtom[atype].mass = mass;
+      MCAtom[atype].brot = brot;
+    }
 }
 
 void MCInit(void)  // only undimensional parameters in this function 
 {
-   const char *_proc_=__func__;    // "MCInit()";
+  const char *_proc_=__func__;    // "MCInit()";
 
-//  INITIALIZE MC TABLES ---------------------------------------
+  //  INITIALIZE MC TABLES ---------------------------------------
 
-   int natom = 0;    // map atom number into atom type
-   for (int type=0;type<NumbTypes;type++)
-   for (int atom=0;atom<MCAtom[type].numb;atom++)
-   {
-      MCType[natom] = type;
-      natom ++;
-   }
+  int natom = 0;    // map atom number into atom type
+  for (int type=0;type<NumbTypes;type++)
+    for (int atom=0;atom<MCAtom[type].numb;atom++)
+      {
+	MCType[natom] = type;
+	natom ++;
+      }
 
-   for (int atom=0;atom<NumbAtoms;atom++)
-   { 
+  for (int atom=0;atom<NumbAtoms;atom++)
+    { 
       PIndex[atom] = atom;
       RIndex[atom] = atom;
-   }
-// ------------------------------------------------------------
+    }
+  // ------------------------------------------------------------
 
-// BoxSize  =  pow((double)NumbAtoms/Density,1.0/(double)NDIM); 
-// define a box size based on number of atoms only (molecules excluded)
+  // BoxSize  =  pow((double)NumbAtoms/Density,1.0/(double)NDIM); 
+  // define a box size based on number of atoms only (molecules excluded)
   
-   BoxSize  =  pow((double)(NUMB_ATOMS+NUMB_MOLCS)/Density,1.0/(double)NDIM);
+  BoxSize  =  pow((double)(NUMB_ATOMS+NUMB_MOLCS)/Density,1.0/(double)NDIM);
 
-   MCBeta   =  1.0/Temperature;
-   MCTau    =  MCBeta/(double)NumbTimes;
+  MCBeta   =  1.0/Temperature;
+  MCTau    =  MCBeta/(double)NumbTimes;
 
-   if (ROTATION)
-   MCRotTau =  MCBeta/(double)NumbRotTimes;
+  if (ROTATION)
+    MCRotTau =  MCBeta/(double)NumbRotTimes;
 
-   RotRatio  = 1;  // div_t quot - it's important for the area estimator
-                   // even without rotations
+  RotRatio  = 1;  // div_t quot - it's important for the area estimator
+  // even without rotations
 
-   if (ROTATION)
-   {
+  if (ROTATION)
+    {
       RotRatio = NumbTimes / NumbRotTimes;  // div_t quot
       int rt   = NumbTimes % NumbRotTimes;  // div_t rem
 #ifndef ROTS_TEST
       if (rt)
-      nrerror (_proc_,"NumbTimes is not proportional to NumbRotTimes");
+	nrerror (_proc_,"NumbTimes is not proportional to NumbRotTimes");
 #endif
-   }
+    }
 
-   for (int type=0;type<NumbTypes;type++)  
-   {
+  for (int type=0;type<NumbTypes;type++)  
+    {
       MCAtom[type].twave2 = 4.0*MCAtom[type].lambda * MCTau;   // thermal wavelength squared
       MCAtom[type].mlsegm = (int)pow(2.0,MCAtom[type].levels); // segmen size for multilevel
       
       if (MCAtom[type].mlsegm >= NumbTimes)
-      nrerror (_proc_,"Segment size is larger then a number of time slices");
-   } 
+	nrerror (_proc_,"Segment size is larger then a number of time slices");
+    } 
 
-   int bcount = 0;  // number of bosons' types
-   int fcount = 0;  // number of fermions' types
-   int icount = 0;  // number of molecules (impurities)
+  int bcount = 0;  // number of bosons' types
+  int fcount = 0;  // number of fermions' types
+  int icount = 0;  // number of molecules (impurities)
 
-   BOSONS   = false;
-   FERMIONS = false;
+  BOSONS   = false;
+  FERMIONS = false;
 
-   for (int type=0;type<NumbTypes;type++)
-   {
+  for (int type=0;type<NumbTypes;type++)
+    {
       if (MCAtom[type].stat == BOSE)
-      {
-         BOSONS = true;
-         BSTYPE = type;
-         bcount ++;  
-      } 
+	{
+	  BOSONS = true;
+	  BSTYPE = type;
+	  bcount ++;  
+	} 
 
       if (MCAtom[type].stat == FERMI)
-      {
-         FERMIONS = true;
-         FERMTYPE = type;
-         fcount ++;  
-      } 
+	{
+	  FERMIONS = true;
+	  FERMTYPE = type;
+	  fcount ++;  
+	} 
 
-      if ((MCAtom[type].molecule == 1)||(MCAtom[type].molecule == 2))
-      {
-         IMTYPE = type;
-         icount ++;  
-      } 
-   }
+      if ((MCAtom[type].molecule == 1)||(MCAtom[type].molecule == 2)||(MCAtom[type].molecule == 3))
+	{
+	  IMTYPE = type;
+	  icount ++;  
+	} 
+    }
 
-   if (bcount>1)
-   nrerror (_proc_,"Too many boson atoms' types");
+  if (bcount>1)
+    nrerror (_proc_,"Too many boson atoms' types");
 
-   if (fcount>1)
-   nrerror (_proc_,"Too many fermion atoms' types");
+  if (fcount>1)
+    nrerror (_proc_,"Too many fermion atoms' types");
 
-   if (icount>1)
-   nrerror (_proc_,"Too many dopant molecule' types");
+  if (icount>1)
+    nrerror (_proc_,"Too many dopant molecule' types");
 
-   if ((icount == 0) && (IMPURITY))
-   nrerror (_proc_,"Impurity type not defined");
+  if ((icount == 0) && (IMPURITY))
+    nrerror (_proc_,"Impurity type not defined");
 
-   if ((BOSONS && FERMIONS) && (BSTYPE == FERMTYPE))
-   nrerror (_proc_,"Wrong particle statistics");
+  if ((BOSONS && FERMIONS) && (BSTYPE == FERMTYPE))
+    nrerror (_proc_,"Wrong particle statistics");
 
-//   if (!WORM && BOSONS)
-//   nrerror (_proc_,"BE statistics: worm algorithm only");
+  //   if (!WORM && BOSONS)
+  //   nrerror (_proc_,"BE statistics: worm algorithm only");
 
-/*#ifndef HOSC_TEST 
-   if (BOSONS && (IMTYPE < 0))  // need to define the reference axes for the area
-   nrerror (_proc_,"Define the impurity type for the area estimator");
-#endif */
+  /*#ifndef HOSC_TEST 
+    if (BOSONS && (IMTYPE < 0))  // need to define the reference axes for the area
+    nrerror (_proc_,"Define the impurity type for the area estimator");
+    #endif */
 }
 
-void MCConfigInit(void)
-{
-   const char *_proc_=__func__;    // "MCConfigInit()";
+ void MCConfigInit(void)
+ {
+  const char *_proc_=__func__;    // "MCConfigInit()";
 
 #ifndef HOSC_TEST
-   initLattice_config(MCCoords); 
-   replInitial_config(MCCoords);
+  initLattice_config(MCCoords); 
+  replInitial_config(MCCoords);
 
-   if (NDIM != 3) nrerror(_proc_,"Only 3D for rotational coordinates");
+  if (NDIM != 3) nrerror(_proc_,"Only 3D for rotational coordinates");
 #else
-   for (int id=0;id<NDIM;id++)	
-   for (int atom=0;atom<NumbAtoms;atom++)
-   for (int it=0;it<NumbTimes;it++)
-   MCCoords[id][atom*NumbTimes+it] = 0.0;	  
+  for (int id=0;id<NDIM;id++)	
+    for (int atom=0;atom<NumbAtoms;atom++)
+      for (int it=0;it<NumbTimes;it++)
+	MCCoords[id][atom*NumbTimes+it] = 0.0;	  
 #endif
 
-   cout<<"initial MCCoords "<<MCCoords[0][0]<<endl;
+  cout<<"initial MCCoords "<<MCCoords[0][0]<<endl;
 
-   for (int it=0;it<(NumbAtoms*NumbTimes);it++)
-   {
-       MCAngles[PHI][it] = 0.0;
-       MCAngles[CTH][it] = 1.0;
-//     toby
-       MCAngles[CHI][it] = 0.0;
+  for (int it=0;it<(NumbAtoms*NumbTimes);it++)
+    {
+  MCAngles[PHI][it] = 0.0;
+  MCAngles[CTH][it] = 1.0;
+  //     toby
+  MCAngles[CHI][it] = 0.0;
 
-       double phi  = MCAngles[PHI][it];
+  double phi  = MCAngles[PHI][it];
       
-       double cost = MCAngles[CTH][it];
-       double sint = sqrt(1.0 - cost*cost);
+  double cost = MCAngles[CTH][it];
+  double sint = sqrt(1.0 - cost*cost);
   
-       MCCosine[AXIS_X][it] = sint*cos(phi);
-       MCCosine[AXIS_Y][it] = sint*sin(phi);
-       MCCosine[AXIS_Z][it] = cost;
-   }
+  MCCosine[AXIS_X][it] = sint*cos(phi);
+  MCCosine[AXIS_Y][it] = sint*sin(phi);
+  MCCosine[AXIS_Z][it] = cost;
+}
 }
 
-void initLattice_config(double **pos)
-// treat atoms and molecules separateley
-// generate a cubic lattice if NumbAtoms = m^3, m - integer	
-// nslices = Number of time slices	
-{
-   cout<<"in initLattice"<<endl;
-   const char *_proc_ = __func__;    // "initLattice_config";
+ void initLattice_config(double **pos)
+ // treat atoms and molecules separateley
+ // generate a cubic lattice if NumbAtoms = m^3, m - integer	
+ // nslices = Number of time slices	
+ {
+  cout<<"in initLattice"<<endl;
+  const char *_proc_ = __func__;    // "initLattice_config";
 
-   int natoms = 0;                   // number of atoms 
-   int nmolcs = 0;                   // number of molecules
+  int natoms = 0;                   // number of atoms 
+  int nmolcs = 0;                   // number of molecules
 
-   for (int type=0;type<NumbTypes;type++)
-   if ((MCAtom[type].molecule == 1) || (MCAtom[type].molecule == 2)) nmolcs += MCAtom[type].numb; 
-   else                       natoms += MCAtom[type].numb; 
+  for (int type=0;type<NumbTypes;type++)
+    if ((MCAtom[type].molecule == 1) || (MCAtom[type].molecule == 2)|| (MCAtom[type].molecule == 3)) nmolcs += MCAtom[type].numb; 
+    else   natoms += MCAtom[type].numb; 
 
-// ----- INITIAL CONFIGURATION FOR ATOMS ----------------------
+  // ----- INITIAL CONFIGURATION FOR ATOMS ----------------------
 
-// box size per particle for atoms only: 
-   double abox = BoxSize/pow((double)natoms,1.0/(double)NDIM); 
-   double shift[NDIM];
+  // box size per particle for atoms only: 
+  double abox = BoxSize/pow((double)natoms,1.0/(double)NDIM); 
+  double shift[NDIM];
 
-   for (int id=0;id<NDIM;id++)
-   shift[id] = 0.5*abox;  
+  for (int id=0;id<NDIM;id++)
+    shift[id] = 0.5*abox;  
     
-   for (int type=0;type<NumbTypes;type++)   // count molecules only
-   if (MCAtom[type].molecule == 0)
-   {
-      int offset = MCAtom[type].offset;         
-      int maxnum = offset + MCAtom[type].numb*NumbTimes;         
-      
-      for (int atom=offset;atom<maxnum;atom+=NumbTimes)
+  for (int type=0;type<NumbTypes;type++)   // count molecules only
+    if (MCAtom[type].molecule == 0)
       {
-         for (int id=0;id<(NDIM-1);id++) 
-         if (shift[id] > BoxSize) 
-         {
-            shift[id]    = 0.5*abox; 
-            shift[id+1] += abox;
-         }
- 
-         for (int id=0;id<NDIM;id++)   // set the center of the box at the origin
-         pos[id][atom] = shift[id] - 0.5*BoxSize;
-
-         shift[0] += abox;
-      } 
-   }
-
-// ----- INITIAL CONFIGURATION FOR MOLECULES -------------------
-
-// box size per particle for molecules only: 
-
-   abox = BoxSize/pow((double)nmolcs,1.0/(double)NDIM); 
-
-   cout<<"abox="<<abox<<" "<<BoxSize<<endl;
-  
-   for (int id=0;id<NDIM;id++)
-   shift[id] = 0.5*abox;  
-    
-   for (int type=0;type<NumbTypes;type++)   // count molecules only
-   if ((MCAtom[type].molecule == 1) || (MCAtom[type].molecule == 2) )
-   {
-      int offset = MCAtom[type].offset;         
-      int maxnum = offset + MCAtom[type].numb*NumbTimes;         
+  int offset = MCAtom[type].offset;         
+  int maxnum = offset + MCAtom[type].numb*NumbTimes;         
       
-      for (int atom=offset;atom<maxnum;atom+=NumbTimes)
-      {  
-        for (int id=0;id<(NDIM-1);id++) 
-        if (shift[id] > BoxSize) {shift[id] = 0.5*abox; shift[id+1] += abox;}
+  for (int atom=offset;atom<maxnum;atom+=NumbTimes)
+    {
+  for (int id=0;id<(NDIM-1);id++) 
+    if (shift[id] > BoxSize) 
+      {
+  shift[id]    = 0.5*abox; 
+  shift[id+1] += abox;
+}
  
-        for (int id=0;id<NDIM;id++) // set the center of the box at the origin
-        {
-           pos[id][atom] = shift[id] - 0.5*BoxSize;
+  for (int id=0;id<NDIM;id++)   // set the center of the box at the origin
+    pos[id][atom] = shift[id] - 0.5*BoxSize;
 
-           if ((natoms == nmolcs))   // to avoid the overlap between particles
-           pos[id][atom] += BoxSize;
-
-           cout<<atom<<" "<<id<<" "<<pos[id][atom]<<endl;
-
-        } 
- 
-        shift[0] += abox;
-      }  // END loop over atoms
-    }    // END loop over types
+  shift[0] += abox;
+} 
 }
 
-/*  no difference between atoms and molecules in the code below
+  // ----- INITIAL CONFIGURATION FOR MOLECULES -------------------
 
-void initLattice_config(double **pos, int nslices)
-// generate a cubic lattice if NumbAtoms = m^3, m - integer	
-// nslices = Number of time slices	
-{
-   const char *_proc_ = __func__;    // "initLattice_config";
- 
-// box size per particle: 
-   double abox = BoxSize/pow((double)NumbAtoms,1.0/(double)NDIM); 
-   double shift[NDIM];
+  // box size per particle for molecules only: 
 
-   for (int id=0;id<NDIM;id++)
-   shift[id] = 0.5*abox;  
+  abox = BoxSize/pow((double)nmolcs,1.0/(double)NDIM); 
+
+  cout<<"abox="<<abox<<" "<<BoxSize<<endl;
+  
+  for (int id=0;id<NDIM;id++)
+    shift[id] = 0.5*abox;  
     
-   int max = NumbAtoms*nslices; 
+  for (int type=0;type<NumbTypes;type++)   // count molecules only
+    if ((MCAtom[type].molecule == 1) || (MCAtom[type].molecule == 2)|| (MCAtom[type].molecule == 3) )
+      {
+  int offset = MCAtom[type].offset;         
+  int maxnum = offset + MCAtom[type].numb*NumbTimes;         
+      
+  for (int atom=offset;atom<maxnum;atom+=NumbTimes)
+    {  
+  for (int id=0;id<(NDIM-1);id++) 
+    if (shift[id] > BoxSize) {shift[id] = 0.5*abox; shift[id+1] += abox;}
+ 
+  for (int id=0;id<NDIM;id++) // set the center of the box at the origin
+    {
+  pos[id][atom] = shift[id] - 0.5*BoxSize;
 
-   for (int atom=0;atom<max;atom+=nslices)
-   {  
-       for (int id=0;id<(NDIM-1);id++) 
-       if (shift[id] > BoxSize) {shift[id] = 0.5*abox; shift[id+1] += abox;}
+  if ((natoms == nmolcs))   // to avoid the overlap between particles
+    pos[id][atom] += BoxSize;
+
+  cout<<atom<<" "<<id<<" "<<pos[id][atom]<<endl;
+
+} 
  
-       for (int id=0;id<NDIM;id++)   // set the center of the box at the origin
-       pos[id][atom] = shift[id] - 0.5*BoxSize;
- 
-       shift[0] += abox;
-   }
+  shift[0] += abox;
+}  // END loop over atoms
+}    // END loop over types
 }
-*/
 
-void replInitial_config(double **pos)
-// replicate configurations for all time slices
-{
-   for (int id=0;id<NDIM;id++)	
-   for (int atom=0;atom<NumbAtoms;atom++)
-   for (int it=1;it<NumbTimes;it++)
-   pos[id][atom*NumbTimes+it] = pos[id][atom*NumbTimes];	  
+ /*  no difference between atoms and molecules in the code below
+
+     void initLattice_config(double **pos, int nslices)
+     // generate a cubic lattice if NumbAtoms = m^3, m - integer	
+     // nslices = Number of time slices	
+     {
+     const char *_proc_ = __func__;    // "initLattice_config";
+ 
+     // box size per particle: 
+     double abox = BoxSize/pow((double)NumbAtoms,1.0/(double)NDIM); 
+     double shift[NDIM];
+
+     for (int id=0;id<NDIM;id++)
+     shift[id] = 0.5*abox;  
+    
+     int max = NumbAtoms*nslices; 
+
+     for (int atom=0;atom<max;atom+=nslices)
+     {  
+     for (int id=0;id<(NDIM-1);id++) 
+     if (shift[id] > BoxSize) {shift[id] = 0.5*abox; shift[id+1] += abox;}
+ 
+     for (int id=0;id<NDIM;id++)   // set the center of the box at the origin
+     pos[id][atom] = shift[id] - 0.5*BoxSize;
+ 
+     shift[0] += abox;
+     }
+     }
+ */
+
+ void replInitial_config(double **pos)
+ // replicate configurations for all time slices
+ {
+  for (int id=0;id<NDIM;id++)	
+    for (int atom=0;atom<NumbAtoms;atom++)
+      for (int it=1;it<NumbTimes;it++)
+	pos[id][atom*NumbTimes+it] = pos[id][atom*NumbTimes];	  
 }	
