@@ -30,8 +30,7 @@ keywords:
 # TODO: uncomment and set these when cutting the first tagged release for Zenodo.
 # version: 1.0.0
 # date-released: "YYYY-MM-DD"
-# TODO: set the license once one is chosen for the repository, e.g.:
-# license: GPL-3.0
+license: MIT
 preferred-citation:
   type: article
   status: in-preparation
