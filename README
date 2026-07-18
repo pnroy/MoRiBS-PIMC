@@ -234,3 +234,11 @@ Note that averaged fraction of column 2 multiplied by the averaged moment of ine
 When one rotor is involved in the simulation, no matter it is a linear or a top, the program creates a $OUTPUT/$FILNAM_sum.rcf file, which records the averaged imaginary time orientational correlation function for the z-axis of the MFF. This function can be used to extract effective rotational constant of the effective rotor. Please refer to JCP, 2004, 120, 5916-5931 for details.
 
 Another superfluidity-relevant file is the $WORK/permutation.tab file. It records the permutation table of all the bosons from time to time and it can be used to calculate the probability of a boson being in a permutation cycle with a certain length.
+
+					************************************
+					**  AI-ASSISTANCE ACKNOWLEDGEMENT **
+					************************************
+
+All scientific code, algorithms, and documentation in this repository are the work of the human authors listed at the top of this README and their research groups.
+
+Repository housekeeping performed in July 2026 was carried out with the assistance of Claude Code (Anthropic), under the direction of P.-N. Roy. The AI-assisted contributions are limited to: correcting the sprng directory name in this README, adding the CITATION.cff citation-metadata file, and adding the LICENSE file. No scientific or algorithmic code was written or modified by AI.
